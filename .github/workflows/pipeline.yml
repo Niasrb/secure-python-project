@@ -15,7 +15,7 @@ jobs:
       - name: Get Keycloak Token
         run: |
           TOKEN=$(curl -X POST \
-            http://keycloak:8081/realms/pipeline-realm/protocol/openid-connect/token \
+            https://votre-keycloak-public.com/realms/pipeline-realm/protocol/openid-connect/token \
             -d "grant_type=client_credentials" \
             -d "client_id=pipeline-client" \
             -d "client_secret=${{ secrets.KEYCLOAK_CLIENT_SECRET }}")
