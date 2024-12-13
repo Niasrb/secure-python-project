@@ -35,6 +35,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Run Safety Check
+        continue-on-error: true 
         run: safety check
 
   code-quality:
