@@ -26,10 +26,8 @@ class SecretAuditor:
 
     def scan_directory(self, directory: str):
         """Scan a directory for potential exposed secrets.
-        
         Args:
             directory: Directory path to scan
-        
         Returns:
             list: List of findings
         """
@@ -42,10 +40,8 @@ class SecretAuditor:
 
     def scan_file(self, filepath: str):
         """Scan a single file for potential exposed secrets.
-        
         Args:
             filepath: Path to the file to scan
-        
         Returns:
             list: List of findings in this file
         """
