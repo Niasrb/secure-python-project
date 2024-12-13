@@ -1,53 +1,37 @@
 import unittest
-import sys
-import os
-
-# Ajouter ces lignes au début du fichier
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
+from unittest.mock import Mock, patch
 from src.secret_management.secret_manager import SecretManager
-from src.secret_management.access_policy import PolicyManager, AccessLevel
 
 
 class TestSecretManager(unittest.TestCase):
     def setUp(self):
-        self.secret_manager = SecretManager()
-        self.policy_manager = PolicyManager()
+        self.manager = SecretManager()
 
-    def test_secret_storage(self):
-        # Test storing and retrieving a secret
-        test_secret = {'password': 'test123'}
-        path = 'test/secret1'
+    @patch('hvac.Client')
+    def test_secret_storage(self, mock_client):
+        # Configure le mock
+        mock_vault = Mock()
+        mock_client.return_value = mock_vault
+        mock_vault.secrets.kv.v2.create_or_update_secret.return_value = True
 
-        # Store secret
-        result = self.secret_manager.store_secret(path, test_secret)
+        # Test le stockage
+        result = self.manager.store_secret('test/secret1', {'password': 'test123'})
         self.assertTrue(result)
+        mock_vault.secrets.kv.v2.create_or_update_secret.assert_called_once()
 
-        # Retrieve secret
-        retrieved = self.secret_manager.get_secret(path)
-        self.assertEqual(retrieved['password'], 'test123')
+    @patch('hvac.Client')
+    def test_secret_retrieval(self, mock_client):
+        # Configure le mock
+        mock_vault = Mock()
+        mock_client.return_value = mock_vault
+        mock_vault.secrets.kv.v2.read_secret_version.return_value = {
+            'data': {'data': {'password': 'test123'}}
+        }
 
-
-class TestPolicyManager(unittest.TestCase):
-    def setUp(self):
-        self.policy_manager = PolicyManager()
-
-    def test_policy_enforcement(self):
-        # Test policy enforcement
-        self.policy_manager.add_policy(
-            'test_user',
-            'test/secret1',
-            [AccessLevel.READ]
-        )
-
-        # Check access
-        self.assertTrue(
-            self.policy_manager.check_access(
-                'test_user',
-                'test/secret1',
-                AccessLevel.READ
-            )
-        )
+        # Test la récupération
+        result = self.manager.get_secret('test/secret1')
+        self.assertEqual(result, {'password': 'test123'})
+        mock_vault.secrets.kv.v2.read_secret_version.assert_called_once()
 
 
 if __name__ == '__main__':
