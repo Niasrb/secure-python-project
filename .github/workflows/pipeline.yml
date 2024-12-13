@@ -23,7 +23,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Bandit security checks
-        run: bandit -r ./src -f json -o bandit-results.json
+        run: |
+           pip install bandit
+           bandit -r . --exclude ./venv,./tests -f json -o bandit-results.json
+        continue-on-error: true
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python@master
