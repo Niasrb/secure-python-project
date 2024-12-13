@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -21,6 +22,46 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install Vault
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install vault
+
+      - name: Setup HashiCorp Vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: 'http://localhost:8200'
+          token: 'dev-only-token'
+          method: 'token'
+
+      - name: Verify Vault Connection
+        run: |
+          vault status || true
+
+      - name: Run Secret Management Audit
+        run: |
+          python -c "
+          from src.secret_management.audit import SecretAuditor
+          auditor = SecretAuditor()
+          findings = auditor.scan_directory('src/')
+          if findings:
+              print('WARNING: Potential secrets found in code:')
+              for finding in findings:
+                  print(f'File: {finding["file"]}, Type: {finding["type"]}, Line: {finding["line"]}')
+              exit(1)
+          "
+        continue-on-error: true
+
+      - name: Run Secret Management Tests
+        env:
+          VAULT_URL: 'http://localhost:8200'
+          VAULT_TOKEN: 'dev-only-token'
+        run: |
+          vault server -dev &
+          sleep 5
+          pytest tests/test_secret_management/test_secret_manager.py -v
+
       - name: Run Bandit security checks
         run: |
            pip install bandit
@@ -29,17 +70,17 @@ jobs:
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python@master
-        continue-on-error: true # Permet de continuer même avec des vulnérabilités
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Run Safety Check
-        continue-on-error: true 
+        continue-on-error: true
         run: safety check
 
   code-quality:
     needs: security-checks
-    continue-on-error: true 
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

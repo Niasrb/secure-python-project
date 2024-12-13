@@ -2,7 +2,7 @@
 Module for managing secrets using HashiCorp Vault.
 This module provides a secure way to store and retrieve secrets.
 """
-
+import os
 import logging
 import hvac
 
@@ -20,9 +20,10 @@ class SecretManager:
     def __init__(self):
         """Initialize the SecretManager with Vault client configuration."""
         self.client = hvac.Client(
-            url='http://localhost:8200',
-            token='dev-only-token'
+            url=os.getenv('VAULT_URL', 'http://localhost:8200'),
+            token=os.getenv('VAULT_TOKEN', 'dev-only-token')
         )
+
 
     def store_secret(self, path: str, secret: dict) -> bool:
         """
