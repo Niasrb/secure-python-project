@@ -24,11 +24,9 @@ class SecretManager:
 
     def store_secret(self, path: str, secret: dict) -> bool:
         """Store a secret in Vault.
-        
         Args:
             path: Path where to store the secret
             secret: Dictionary containing the secret data
-        
         Returns:
             bool: True if successful, False otherwise
         """
@@ -45,10 +43,8 @@ class SecretManager:
 
     def get_secret(self, path: str) -> dict:
         """Retrieve a secret from Vault.
-        
         Args:
             path: Path of the secret to retrieve
-        
         Returns:
             dict: The secret data or None if error
         """
