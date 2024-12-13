@@ -11,17 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-# etape2 Keyloack
-      - name: Get Keycloak Token
-        run: |
-          TOKEN=$(curl -X POST \
-            https://votre-keycloak-public.com/realms/pipeline-realm/protocol/openid-connect/token \
-            -d "grant_type=client_credentials" \
-            -d "client_id=pipeline-client" \
-            -d "client_secret=${{ secrets.KEYCLOAK_CLIENT_SECRET }}")
-          echo "KEYCLOAK_TOKEN=$TOKEN" >> $GITHUB_ENV
-
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
