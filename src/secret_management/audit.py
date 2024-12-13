@@ -1,9 +1,14 @@
+"""Module for auditing secret access and usage."""
 import os
 import re
 import logging
 
+
 class SecretAuditor:
+    """Class for auditing secret access and scanning for exposed secrets."""
+
     def __init__(self):
+        """Initialize the SecretAuditor."""
         self.setup_logging()
         self.patterns = {
             'api_key': r'api[_-]key["\']:\s*["\'][a-zA-Z0-9]+["\']',
@@ -12,13 +17,15 @@ class SecretAuditor:
         }
 
     def setup_logging(self):
-        logging.basicConfig(
-            filename='audit.log',
-            level=logging.INFO,
-            format='%(asctime)s - %(message)s'
-        )
+        """Set up logging configuration."""
+        self.logger = logging.getLogger('secret_auditor')
+        self.logger.setLevel(logging.INFO)
+        handler = logging.FileHandler('audit.log')
+        handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+        self.logger.addHandler(handler)
 
     def scan_directory(self, directory: str):
+        """Scan a directory for potential exposed secrets."""
         findings = []
         for root, _, files in os.walk(directory):
             for file in files:
@@ -27,10 +34,11 @@ class SecretAuditor:
         return findings
 
     def scan_file(self, filepath: str):
+        """Scan a single file for potential exposed secrets."""
         findings = []
         try:
-            with open(filepath, 'r') as f:
-                content = f.read()
+            with open(filepath, 'r', encoding='utf-8') as file:
+                content = file.read()
                 for secret_type, pattern in self.patterns.items():
                     matches = re.finditer(pattern, content)
                     for match in matches:
@@ -39,6 +47,6 @@ class SecretAuditor:
                             'type': secret_type,
                             'line': content.count('\n', 0, match.start()) + 1
                         })
-        except Exception as e:
-            logging.error(f"Error scanning {filepath}: {e}")
+        except (IOError, OSError) as error:
+            self.logger.error("Error scanning %s: %s", filepath, error)
         return findings
