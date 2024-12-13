@@ -1,38 +1,62 @@
-import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch, Mock, MagicMock
+import pytest
 from src.secret_management.secret_manager import SecretManager
 
 
-class TestSecretManager(unittest.TestCase):
-    def setUp(self):
-        self.manager = SecretManager()
-
+class TestSecretManager:
     @patch('hvac.Client')
-    def test_secret_storage(self, mock_client):
-        # Configure le mock
-        mock_vault = Mock()
-        mock_client.return_value = mock_vault
-        mock_vault.secrets.kv.v2.create_or_update_secret.return_value = True
+    def test_secret_storage(self, mock_client_class):
+        # Configuration du mock
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
 
-        # Test le stockage
-        result = self.manager.store_secret('test/secret1', {'password': 'test123'})
-        self.assertTrue(result)
-        mock_vault.secrets.kv.v2.create_or_update_secret.assert_called_once()
-
-    @patch('hvac.Client')
-    def test_secret_retrieval(self, mock_client):
-        # Configure le mock
-        mock_vault = Mock()
-        mock_client.return_value = mock_vault
-        mock_vault.secrets.kv.v2.read_secret_version.return_value = {
-            'data': {'data': {'password': 'test123'}}
+        # Configuration du mock pour kv.v2
+        mock_kv = MagicMock()
+        mock_client.secrets.kv.v2 = mock_kv
+        mock_kv.create_or_update_secret.return_value = {
+            'data': {
+                'success': True
+            }
         }
 
-        # Test la récupération
-        result = self.manager.get_secret('test/secret1')
-        self.assertEqual(result, {'password': 'test123'})
-        mock_vault.secrets.kv.v2.read_secret_version.assert_called_once()
+        # Création de l'instance avec le mock
+        manager = SecretManager()
 
+        # Test
+        result = manager.store_secret('test/secret1', {'password': 'test123'})
 
-if __name__ == '__main__':
-    unittest.main()
+        # Vérifications
+        mock_kv.create_or_update_secret.assert_called_once_with(
+            path='test/secret1',
+            secret={"data": {'password': 'test123'}}
+        )
+        assert result == True
+
+    @patch('hvac.Client')
+    def test_secret_retrieval(self, mock_client_class):
+        # Configuration du mock
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+
+        # Configuration du mock pour kv.v2
+        mock_kv = MagicMock()
+        mock_client.secrets.kv.v2 = mock_kv
+        mock_kv.read_secret_version.return_value = {
+            'data': {
+                'data': {
+                    'password': 'test123'
+                }
+            }
+        }
+
+        # Création de l'instance avec le mock
+        manager = SecretManager()
+
+        # Test
+        result = manager.get_secret('test/secret1')
+
+        # Vérifications
+        mock_kv.read_secret_version.assert_called_once_with(
+            path='test/secret1'
+        )
+        assert result == {'password': 'test123'}
