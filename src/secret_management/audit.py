@@ -1,9 +1,14 @@
+"""Module for auditing secret access and usage."""
 import os
 import re
 import logging
 
+
 class SecretAuditor:
+    """Class for auditing secret access and scanning for exposed secrets."""
+
     def __init__(self):
+        """Initialize the SecretAuditor."""
         self.setup_logging()
         self.patterns = {
             'api_key': r'api[_-]key["\']:\s*["\'][a-zA-Z0-9]+["\']',
@@ -12,6 +17,7 @@ class SecretAuditor:
         }
 
     def setup_logging(self):
+        """Set up logging configuration."""
         logging.basicConfig(
             filename='audit.log',
             level=logging.INFO,
@@ -19,6 +25,14 @@ class SecretAuditor:
         )
 
     def scan_directory(self, directory: str):
+        """Scan a directory for potential exposed secrets.
+        
+        Args:
+            directory: Directory path to scan
+        
+        Returns:
+            list: List of findings
+        """
         findings = []
         for root, _, files in os.walk(directory):
             for file in files:
@@ -27,10 +41,18 @@ class SecretAuditor:
         return findings
 
     def scan_file(self, filepath: str):
+        """Scan a single file for potential exposed secrets.
+        
+        Args:
+            filepath: Path to the file to scan
+        
+        Returns:
+            list: List of findings in this file
+        """
         findings = []
         try:
-            with open(filepath, 'r') as f:
-                content = f.read()
+            with open(filepath, 'r', encoding='utf-8') as file:
+                content = file.read()
                 for secret_type, pattern in self.patterns.items():
                     matches = re.finditer(pattern, content)
                     for match in matches:
@@ -39,6 +61,6 @@ class SecretAuditor:
                             'type': secret_type,
                             'line': content.count('\n', 0, match.start()) + 1
                         })
-        except Exception as e:
-            logging.error(f"Error scanning {filepath}: {e}")
+        except Exception as error:
+            logging.error("Error scanning %s: %s", filepath, error)
         return findings
