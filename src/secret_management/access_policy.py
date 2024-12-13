@@ -19,7 +19,6 @@ class PolicyManager:
 
     def add_policy(self, user: str, path: str, levels: List[AccessLevel]):
         """Add a policy for a user.
-        
         Args:
             user: Username
             path: Path to the secret
@@ -31,12 +30,10 @@ class PolicyManager:
 
     def check_access(self, user: str, path: str, level: AccessLevel) -> bool:
         """Check if a user has specific access to a path.
-        
         Args:
             user: Username
             path: Path to check
             level: Required access level
-        
         Returns:
             bool: True if access granted, False otherwise
         """
