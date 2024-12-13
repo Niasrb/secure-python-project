@@ -42,7 +42,7 @@ class SecretManager:
             )
             logger.info("Secret stored at %s", path)
             return True
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             logger.error("Error storing secret: %s", error)
             return False
 
@@ -60,6 +60,6 @@ class SecretManager:
             secret = self.client.secrets.kv.v2.read_secret_version(path=path)
             logger.info("Secret retrieved from %s", path)
             return secret['data']['data']
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             logger.error("Error retrieving secret: %s", error)
             return {}
