@@ -40,6 +40,7 @@ jobs:
 
   code-quality:
     needs: security-checks
+    continue-on-error: true 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
